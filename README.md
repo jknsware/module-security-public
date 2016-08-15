@@ -7,6 +7,8 @@ If you're not a customer, contact us at <info@gruntwork.io> or <http://www.grunt
 
 This repo contains modules for setting up best practices for managing secrets, credentials, and servers:
 
+* [auto-update](/modules/auto-update): This module can configure a Linux server to automatically install security
+  updates.
 * [kms-master-key](/modules/kms-master-key): This Terraform Module creates a new [Customer Master Key
   (CMK)](http://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#master_keys) in [Amazon's Key Management
   Service (KMS)](https://aws.amazon.com/kms/) as well as a [Key
@@ -68,6 +70,23 @@ gruntwork-install --module-name "ecs-scripts" --repo "https://github.com/gruntwo
 ```
 
 See the docs for each script & binary for detailed instructions on how to use them.
+
+## Server security
+
+For an intro to server security, check out the following guides:
+
+* [My First 10 Minutes On a Server - Primer for Securing
+  Ubuntu](http://www.codelitt.com/blog/my-first-10-minutes-on-a-server-primer-for-securing-ubuntu/)
+* [2016 Guide to User Data Security](https://www.inversoft.com/guides/2016-guide-to-user-data-security)
+* [7 Security Measures to Protect Your
+  Servers](https://www.digitalocean.com/community/tutorials/7-security-measures-to-protect-your-servers)
+* The [Open Web Application Security Project](https://www.owasp.org/index.php/Main_Page), especially their handy
+  cheat sheets on [Password Storage](https://www.owasp.org/index.php/Password_Storage_Cheat_Sheet), [Session
+  Management](https://www.owasp.org/index.php/Session_Management_Cheat_Sheet), [SQL
+  Injection](https://www.owasp.org/index.php/SQL_Injection), and
+  [XSS](https://www.owasp.org/index.php/XSS_(Cross_Site_Scripting)_Prevention_Cheat_Sheet).
+* [What should every programmer know about
+  security?](http://stackoverflow.com/questions/2794016/what-should-every-programmer-know-about-security)
 
 ## Developing a module
 
