@@ -7,6 +7,9 @@ If you're not a customer, contact us at <info@gruntwork.io> or <http://www.grunt
 
 This repo contains modules for setting up best practices for managing secrets, credentials, and servers:
 
+* [ssh-iam](/modules/ssh-iam): This module contains an app called `ssh-iam` that allows you to manage SSH access to
+  your EC2 Instances using AWS IAM. Developers can upload public SSH Keys to their IAM user accounts and `ssh-iam`
+  will allow them to SSH to EC2 Instances using their IAM user name and SSH key for authentication.
 * [auto-update](/modules/auto-update): This module can configure a Linux server to automatically install security
   updates.
 * [kms-master-key](/modules/kms-master-key): This Terraform Module creates a new [Customer Master Key
