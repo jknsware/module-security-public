@@ -21,7 +21,10 @@ Instead, we recommend using the [Gruntwork installer](https://github.com/gruntwo
 },
 {
   "type": "shell",
-  "inline": "gruntwork-install --binary-name ssh-iam --tag v0.0.3 --repo https://github.com/gruntwork-io/module-security",
+  "inline": [
+    "gruntwork-install --binary-name ssh-iam --tag v0.0.3 --repo https://github.com/gruntwork-io/module-security",
+    "sudo /usr/local/bin/ssh-iam install --iam-group MyIamGroup --iam-group-sudo MyIamSudoGroup"
+  ],
   "environment_vars": [
     "GITHUB_OAUTH_TOKEN={{user `github_auth_token`}}"
   ]
