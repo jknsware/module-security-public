@@ -80,7 +80,8 @@ Check out the [ssh-iam example](/examples/ssh-iam) for sample code.
 
 #### Test it out
 
-You should now be able to SSH to your servers using your IAM user name and public key. For example, if you installed
+You should now be able to SSH to your servers using your IAM user name and public key (if you ran `ssh-iam install`,
+the first sync will happen about 90 seconds after your server boots up). For example, if you installed
 `ssh-iam` on an EC2 Instance with IP address `11.22.33.44` and your IAM user name is `grunt`, you can now connect to
 the server as follows:
 
