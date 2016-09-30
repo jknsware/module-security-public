@@ -83,3 +83,7 @@ manage the CMK, you may wish to use IAM policies. In addition, IAM is a central 
 using just the CMK Key Policy means you now need to update the Key Policy any time the perissions change, which may be 
 more onerous.
 
+## TODO
+
+- Explicitly test that granting another AWS resource such as an S3 Bucket privileges on the KMS Key works as expected
+  for key users.

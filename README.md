@@ -7,11 +7,10 @@ If you're not a customer, contact us at <info@gruntwork.io> or <http://www.grunt
 
 This repo contains modules for setting up best practices for managing secrets, credentials, and servers:
 
-* [ssh-iam](/modules/ssh-iam): This module contains an app called `ssh-iam` that allows you to manage SSH access to
-  your EC2 Instances using AWS IAM. Developers can upload public SSH Keys to their IAM user accounts and `ssh-iam`
-  will allow them to SSH to EC2 Instances using their IAM user name and SSH key for authentication.
 * [auto-update](/modules/auto-update): This module can configure a Linux server to automatically install security
   updates.
+* [cloudtrail](/modules/cloudtrail): This Terraform Module configures AWS CloudTrail in an AWS account, along with reasonable
+  defaults around the S3 Bucket in which CloudTrail logs are stored.
 * [kms-master-key](/modules/kms-master-key): This Terraform Module creates a new [Customer Master Key
   (CMK)](http://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#master_keys) in [Amazon's Key Management
   Service (KMS)](https://aws.amazon.com/kms/) as well as a [Key
@@ -19,6 +18,11 @@ This repo contains modules for setting up best practices for managing secrets, c
   access to the CMK. You can use a CMK to encrypt and decrypt small amounts of data and to generate [Data
   Keys](http://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#data-keys) that can be used to encrypt and
   decrypt larger amounts of data.
+* [ssh-iam](/modules/ssh-iam): This module contains an app called `ssh-iam` that allows you to manage SSH access to
+  your EC2 Instances using AWS IAM. Developers can upload public SSH Keys to their IAM user accounts and `ssh-iam`
+  will allow them to SSH to EC2 Instances using their IAM user name and SSH key for authentication.
+* [iam-groups](/modules/iam-groups): This Terraform Module creates a best-practices set of IAM Groups that can be used to 
+  secure human and machine IAM Users.
 
 Click on each module above to see its documentation. Head over to the [examples](/examples) folder for examples.
 
