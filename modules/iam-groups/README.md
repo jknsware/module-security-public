@@ -3,7 +3,7 @@ We publish the documentation publicly so it turns up in online searches, but to 
 If you're already a Gruntwork customer, the original source for this file is at: <https://github.com/gruntwork-io/module-security/blob/master/modules/iam-groups/README.md>.
 If you're not a customer, contact us at <info@gruntwork.io> or <http://www.gruntwork.io> for info on how to get access!
 
-# A Best-Practices Set of IAM Group Permissions
+# A Best-Practices Set of IAM Groups
 
 This Gruntwork Terraform Module sets up a set of IAM Groups that will make sense for most organizations and attaches to 
 them a set of IAM Policies (permissions) that make it easier to manage different permissions levels in your AWS account.
@@ -15,13 +15,15 @@ way to familiarize yourself with the terminology.
 
 In Summer 2014, a company called CodeSpaces that offered "rock solid, secure, and affordable git hosting and project 
 management" was forced to shut down after a single rogue employee entered its AWS account and wiped out everything 
-([See ArsTechnica Article](http://arstechnica.com/security/2014/06/aws-console-breach-leads-to-demise-of-service-with-proven-backup-plan/)). The goal of this module is to carefully manage access to your AWS account to reduce the chances of rogue employees or external attackers being able to do too much damage.
+([See ArsTechnica Article](http://arstechnica.com/security/2014/06/aws-console-breach-leads-to-demise-of-service-with-proven-backup-plan/)). 
+The goal of this module is to carefully manage access to your AWS account to reduce the chances of rogue employees or 
+external attackers being able to do too much damage.
 
 ## How do you use this module?
 
 ### Requirements
 
-- You will need to be authenticated to AWS with an account that has most `iam:*` permissions. 
+- You will need to be authenticated to AWS with an account that has `iam:*` permissions. 
 
 ### Instructions
 
@@ -31,18 +33,22 @@ Check out the [iam-groups example](../../examples/iam-groups) for a working exam
 
 ### IAM Groups
 
-This module creates the following IAM Groups:
+This module optionally creates the following IAM Groups:
 
-- **admin:** IAM Users in this group have full access to all resources in the AWS account.
+- **full-access:** IAM Users in this group have full access to all resources in the AWS account.
 - **billing:** IAM Users in this group can read and write billing settings, but nothing else.
+- **developers:** IAM Users in this group have whatever permissions are declared in `var.iam_group_developers_permitted_services`. 
+  In addition, these IAM Users have rights to a personal S3 bucket named `<var.iam_group_developers_permitted_services><iam-user-name>`. 
 - **read-only:** IAM Users in this group can read all resources in the AWS account but have no write privileges.
 - **use-existing-iam-roles:** IAM Users in this group can pass *existing* IAM Roles to AWS resources to which they have 
   been granted access. These IAM Users cannot create *new* IAM Roles, only use existing ones. See [below](#the-three-levels-of-iam-permissions)
   for more information.
+- **ssh-iam-sudo-users:** IAM Users in this group have SSH access with `sudo` privileges to any EC2 Instance configured to use this group to manage SSH logins.
+- **ssh-iam-users:** IAM Users in this group have SSH access without `sudo` privileges to any EC2 Instance configured to use this group to manage SSH logins.
 
-These represent a standard set of IAM Groups, but your organization may need additional groups (e.g. "developers"). As
-shown in the [iam-groups example](../../examples/iam-groups), you are encouraged to create any additional IAM Groups 
-that make sense. Use the above IAM Groups as a good starting point.
+These represent a standard set of IAM Groups, but your organization may need additional groups. You're welcome to add 
+additional IAM Groups outside this module to suit your organization's needs. Is the IAM Group you need a Group most 
+teams would need? Let us know at support@gruntwork.io and maybe we'll consider adding it to the module itself.
 
 ### IAM Policies
 
@@ -221,6 +227,13 @@ What this model tells us is that all IAM Users must fall into one of these three
 User requires the ability to define IAM Roles as part of her job, there's no point limiting this IAM User's permissions.
 Instead, just consider them an admin user.
 
+### How do you know what to include in an IAM Policy?
+
+We use a combination of our own personal experience and the [AWS Managed Policies for Job Functions](https://aws.amazon.com/blogs/security/how-to-assign-permissions-using-new-aws-managed-policies-for-job-functions/)
+as a reference. Note that none of the AWS Managed Policies allows us to directly specify a `condition` property, which 
+means we can't enforce multi-factor authentication (MFA) on these policies. As a result, we've created our own policies,
+written automated tests for them, anf of course will continue to maintain them over time.
+
 ### Gotcha's 
 
 #### Avoid the Terraform resource `aws_iam_policy_attachment`
@@ -237,5 +250,4 @@ Instead, use these Terraform resources so you don't have to worry about this pro
 
 # TODO
 
-- Think through how IAM Users can be forced to use MFA.
-- Add tests to validate that the `iam-user-self-mgmt` IAM Policy allows updates to a user's MFA device as expected.
+Are we missing any functionality? Let us know by emailing info@gruntwork.io!
