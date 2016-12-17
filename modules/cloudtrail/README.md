@@ -168,8 +168,33 @@ The following are the various parts of the cloudtrail module threat model:
 
 ## Known Issues
  
-- Terraform has a bug where you will see a diff on the S3 lifecycle rules on every `terraform apply`. See 
+- Terraform has a bug where you will see a diff on the S3 lifecycle rules on every `terraform apply` or `terraform plan`. See 
   [#9119](https://github.com/hashicorp/terraform/issues/9119) to track progress on this issue.
+
+- If you attempt to enable or disable archiving of log files, Terraform will attempt to delete and re-create your existing S3
+  Bucket. This will fail because your Bucket won't be empty, but more importantly, the goal here is just to change some S3
+  Lifecycle Rules, so a destroy/re-create is unnecessary.
+  
+  Here's what the `terraform plan` output looks like if you attempt to disable archiving:
+  
+  ```
+  - module.cloudtrail.aws_s3_bucket.cloudtrail_with_logs_archived
+  
+  + module.cloudtrail.aws_s3_bucket.cloudtrail_with_logs_not_archived
+      acceleration_status:                                                 "<computed>"
+      acl:                                                                 "private"
+      arn:                                                                 "<computed>"
+      ...
+  ```
+  
+  Fortunately, there's a 1-line workaround using Terraform's built-in state management features:
+  
+  **If you are ENABLING archiving:** `terraform state mv module.cloudtrail.aws_s3_bucket.cloudtrail_with_logs_archived module.cloudtrail.aws_s3_bucket.cloudtrail_with_logs_not_archived`
+  
+  **If you are DISABLING archiving:** `terraform state mv module.cloudtrail.aws_s3_bucket.cloudtrail_with_logs_not_archived module.cloudtrail.aws_s3_bucket.cloudtrail_with_logs_archived`
+  
+  These commands tell Terraform to update the state file, and treat the bucket that Terraform wanted to create as already 
+  existing. Now you'll get a yellow "modify" output when running `terraform plan` and no destroy/re-create will be needed.
  
 ## TODO
 
