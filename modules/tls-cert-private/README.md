@@ -18,8 +18,8 @@ These certificates are ideal for use with a **private** service. For services th
 - Make sure the latest version of [Docker](https://www.docker.com/products/docker-toolbox) is installed and running.
 
 ### Instructions
-- Edit the `docker-compose.yml` file and fill in your desired argument values. 
-- Now run `docker-compose up` and your TLS certs will output to a local `output` directory!
+1. Edit the `docker-compose.yml` file and fill in your desired argument values. 
+1. Now run `docker-compose up` and your TLS certs will output to a local `output` directory!
 
 To see documentation on the arguments in `docker-compose.yml`, see the [main.sh](scripts/main.sh) file.
  
