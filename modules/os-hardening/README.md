@@ -21,14 +21,21 @@ is mounting multiple partitions. We hope to implement more CIS recommendations o
 There are two major components to this module:
 
 - [ami-builder](ami-builder): This is a Terraform template that launches an EC2 Instance with Packer pre-installed.
-- [packer-templates](packer-templates): This is a Packer build template, plus supporting files that will build an AMI 
-  from which you can launch a hardened OS.
+- [partition-scripts](partition-scripts): This is a set of bash scripts that create multiple disk partitions, format them
+  as ext4, and mount them to various paths with various mount options such as `noexec` or `nosuid`. These scripts are 
+  meant to be run in a Packer template that uses the Packer [amazon-chroot](https://www.packer.io/docs/builders/amazon-chroot.html) 
+  builder.
    
 Fundamentally, to generate an AMI you must:
 
+1. Create a Packer template `amazon-linux.json` that uses the partition-scripts.
 1. Launch the ami-builder EC2 Instance.
-2. SSH into the ami-builder EC2 Instance and run `packer build amazon-linux.json` to build the AMI.
-3. Terminate the ami-builder EC2 Instance.
+1. Copy your Packer template ont the ami-builder EC2 Instance (e.g. with `scp`).
+1. SSH into the ami-builder EC2 Instance and run `packer build amazon-linux.json` to build the AMI.
+1. Terminate the ami-builder EC2 Instance.
+
+We recognize that is a lot of manual steps to build a single AMI, so check out the [os-hardening example](/examples/os-hardening)
+for a pre-built Packer template plus a script (`packer-build.sh`) that will automate all the above steps.
 
 ### Why do I need to launch a separate EC2 Instance to run Packer? 
 
@@ -37,13 +44,17 @@ See below for additional details on what this is and how to use it.
 
 ## How to Use this Module
 
+**The best way to use this module is to substantially copy the [os-hardening example code](../../examples/os-hardening).
+Unlike most Gruntwork examples, the example for this module contains a full Packer build file plus a wrapper script to
+create the AMI with a single command and may be viewed as a "canonical" way to instantiate the os-hardening modules.**
+
 ### How to Set Your EBS Volume Size and Configure The File System Partitions You Want
 
 Before building the AMI with Packer, you may wish to customize the particular file systems and partitions that your 
 hardened OS will use. Follow these steps:
 
-1. Set the value of the `ebs_volume_size` variable in the Packer Template (e.g. `amazon-linux.json`) to the desired EBS
-   Volume size (in GB).
+1. Set the value of the `ebs_volume_size` variable in the example Packer Template (e.g. `amazon-linux.json`) to the 
+   desired EBS Volume size (in GB).
 
 1. Edit the Packer Template so that the following scripts specify the desired partition paths
    and sizes:
@@ -57,13 +68,14 @@ hardened OS will use. Follow these steps:
    Note that you will redundantly pass the same list of partition paths to each of the above scripts, but only 
    `partition-volumes.sh` needs both the mount point *and* the desired partition size.
 
-2. Edit the `/files/etc/fstab` file to match the partitions from the previous step. Specify any mount options as desired.
+1. Edit the `/files/etc/fstab` file to match the partitions from the previous step. Specify any mount options as desired.
 
 That's it! The Packer template will take care of the rest.
 
 ### How to Build the AMI with Packer
 
-Now we're ready to build the actual AMI.
+Now we're ready to build the actual AMI. Note: The [os-hardening example](../../examples/os-hardening) contains a script
+that automates all these steps, but, for the sake of understanding, we'll describe them individually below:
 
 1. Launch the [ami-builder](ami-builder) EC2 Instance. We will execute Packer from this EC2 Instance.
 
@@ -92,14 +104,42 @@ Now we're ready to build the actual AMI.
 
 ### How to Launch an AMI with an Encrypted EBS Volume
 
-Packer doesn't yet natively support this, but [Pull Request #4584](https://github.com/mitchellh/packer/pull/4584) is 
-implementing amazon-chroot support for the `encrypt_boot` property. This will allow us to build an AMI as above, except
-that once the AMI is ready, Packer will automatically copy the unencrypted [Snapshot](
-http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSSnapshots.html) as an encrypted Snapshot, create a new AMI based
- on the encrypted Snapshot, and delete the original AMI and its underlying unecncrypted Snapshot.
+As of Packer 0.12.3, Packer supports the `encrypt_boot` property for the amazon-chroot builder! See  [Pull Request #4584](https://github.com/mitchellh/packer/pull/4584). 
+This will allow us to build an AMI as above, except that once the AMI is ready, Packer will automatically copy the 
+unencrypted [Snapshot](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSSnapshots.html) as an encrypted Snapshot, 
+create a new AMI based on the encrypted Snapshot, and delete the original AMI and its underlying unecncrypted Snapshot.
 
-In the meantime, consider running an instance with the root volume unencrypted, but with additional volumes mounted as
-encrypted volumes.
+Until Packer 0.12.3 is released, you can still set `encrypt_boot` to true and earlier versions of Packer will simply 
+ignore this property. In the meantime, consider running an EC2 Instance with the root volume unencrypted, but with 
+additional volumes mounted as encrypted volumes.
+
+### Using Your Hardened OS as a "Base AMI"
+
+A best practice we encourage is to first build your hardened OS Image using these modules and the [os-hardening example](../../examples/os-hardening).
+You can now view this AMI as your "base AMI", and all other Packer builds can be built on top of this AMI. For example,
+you might have:
+
+* Base AMI: Hardened OS (built from stock Amazon Linux)
+* Bastion Host: Built from Base AMI
+* MongoDB Host: Built from Base AMI
+
+In the above example, the Bastion Host and MongoDB Host Packer builds will "just work" with a single exception: By default,
+Packer uploads all scripts defined in the [Remote Shell Provisioner](https://www.packer.io/docs/provisioners/shell.html)
+to `/tmp` and then executes them. But our hardened OS most likely has the `noexec` option set for the `/tmp` file system,
+which means that no code can be executed from `/tmp` by design!
+
+To fix this, you must set the [remote_folder](https://www.packer.io/docs/provisioners/shell.html#remote_folder) property,
+to a folder that *is* executable. For example, here we set `remote_folder` to `/home/ec2-user`:
+
+```json
+"provisioners": [{
+    "type": "shell",
+    "remote_folder": "/home/ec2-user",
+    "inline": [
+      "sudo yum update -y"
+    ]
+}]
+```
     
 ## How this Module Works
 
@@ -142,17 +182,26 @@ builder. Packer templates that use this builder work as follows:
 Most Packer builds use the [remote-shell](https://www.packer.io/docs/provisioners/shell.html) provisioner to apply
 configuration. It's called the remote shell provisioner because it executes shell commands on the "remote" EC2 Instance.
 When using the amazon-ebs builder, that means the newly launched EC2 Instance runs the shell commands. When using the
-amazon-chroot builder, that means the commands are run from within the `chroot` environment.
+amazon-chroot builder, that means the commands are run from within the `chroot` environment. 
+
+That is, Packer will first run `chroot /my/mount/point` and *then* execute all commands. An individual program has no 
+knowledge that it's running in a special environment. It will simply access the typical file system paths. But we, the 
+omniscient operator know that in reality what this program thinks is `/` is actually `/my/mount/point`.
+
+This way, we can configure our EC2 Instance as we typically do in a Packer build, except that all configuration commands
+are actually modifying the attached EBS Volume, not our root file system.
 
 #### The Packer Local Shell Provisioner
 
 The Packer [local-shell](https://www.packer.io/docs/provisioners/shell-local.html) provisioner executes shell commands
- from your "local" machine. When using the amazon-ebs builder, that means shell commands run from your local machine.
-When using the amazon-chroot builder, that means the commands are run from the EC2 Instance where you launched Packer.
+from your "local" machine. 
+ 
+When using the amazon-ebs builder, that means shell commands run from your local machine.
 
+When using the amazon-chroot builder, that means the commands are run from the EC2 Instance where you launched Packer. 
 This is significant because it means we can execute Packer commands from the host system against the attached EBS Volume.
 This allows us to, for example, delete partitions from the attached EBS Volume and add new partitions. It is the only way
- to use Packer to create an AMI with multiple partitions.
+to use Packer to create an AMI with multiple partitions.
 
 ## Module Design Decisions
 
@@ -207,8 +256,5 @@ who needed additional space to build a new AMI was not unreasonable.
 
 ## TODO
 
-- Allow Packer build to be initiated with `terraform apply` using a local provisioner
-- Enable encryption on the EBS Volume.
-- Implement automated testing.
 - Consider setting up new CloudWatch metrics to report available space on multiple disk partitions, not just the root 
 disk partition.
