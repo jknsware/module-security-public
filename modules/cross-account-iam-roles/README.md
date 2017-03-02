@@ -73,6 +73,11 @@ This module creates the following IAM roles (all optional):
   `var.allow_billing_access_from_other_account_arns` will get full (read and write) access to the billing details for 
   this account.
 
+* **allow-ssh-iam-access-from-other-accounts**: Users (or more likely, EC2 Instances) from the accounts in 
+  `var.allow_ssh_iam_access_from_other_account_arns` will get ead access to IAM Groups and public SSH keys. This is
+  useful to allow [ssh-iam](/modules/ssh-iam) running on EC2 Instances in other AWS accounts to validate SSH 
+  connections against IAM users defined in this AWS account.
+
 * **allow-dev-access-from-other-accounts**: Users from the accounts in `var.allow_dev_access_from_other_account_arns` 
   will get full (read and write) access to the services in this account specified in `var.dev_permitted_services`.
 

@@ -68,15 +68,72 @@ See the [CLI docs](#cli-docs) for the full list of available options.
 
 #### Set up IAM permissions
 
+##### Single AWS account
+
 `ssh-iam` retrieves info from IAM using the AWS API. To use the API, `ssh-iam` needs:
 
 1. AWS credentials: the best way to provide credentials is to attach an [IAM
    Role](http://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html) to the EC2 Instance.
 1. IAM permissions: `ssh-iam` needs an [IAM
    Policy](http://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies.html) that allows the `iam:GetGroup`,
-   `iam:ListSSHPublicKeys`, and `iam:GetSSHPublicKey` actions.
+   `iam:ListSSHPublicKeys`, and `iam:GetSSHPublicKey` actions. The [iam-policies module](modules/iam-policies) can 
+   provides the IAM policy with these permissions for you in the output variable `ssh_iam_permissions`. 
 
 Check out the [ssh-iam example](/examples/ssh-iam) for sample code.
+
+##### Multiple AWS accounts
+
+If you have multiple AWS accounts and you need `ssh-iam` to validate the public SSH keys of IAM users in a 
+different account, you need to do the following:
+
+1. In the AWS account where the IAM users are defined, use the [cross-account-iam-roles 
+   module](/modules/cross-account-iam-roles) to create an IAM role that allows your other AWS account(s) to access IAM 
+   Group and public SSH key info by specifying the ARNs of those other accounts in the 
+   `allow_ssh_iam_access_from_other_account_arns` input variable. Rough example:
+   
+    ```hcl
+    module "cross_account_iam_roles" {
+      source = "git::git@github.com:gruntwork-io/module-security.git//modules/cross-account-iam-roles?ref=v1.0.8"
+    
+      allow_ssh_iam_access_from_other_account_arns = ["arn:aws:iam::123445678910:root"]
+   
+      # ... (other params ommitted) ...
+    }   
+    ```
+
+1. In the AWS account where `ssh-iam` is running, give the EC2 Instances that run `ssh-iam` an IAM role that has 
+   permissions to assume an IAM role in the users account. You can create the IAM policy with this permission using
+   the [iam-policies module](/modules/iam-policies) by specifying the ARN of the IAM role you created in the users 
+   account in the previous step in the `allow_access_to_other_account_arns` input variable and adding the policy in
+   the `allow_access_to_other_accounts` output variable to the EC2 Instance's IAM role.
+   
+    ```hcl
+    module "iam_policies" {
+      source = "git::git@github.com:gruntwork-io/module-security.git//modules/iam-policies?ref=v1.0.8"
+    
+      # ssh-iam is an automated app, so we can't use MFA with it
+      should_require_mfa = false
+      allow_access_to_other_account_arns = ["arn:aws:iam::987654321000:role/allow-ssh-iam-access-from-other-accounts"]
+      # ... (other params ommitted) ...
+    }
+ 
+    resource "aws_iam_role_policy" "ssh_iam_external_account_permissions" {
+      name = "ssh-iam-external-account-permissions"
+      role = "${module.example_instance.iam_role_id}"
+      policy = "${element(module.iam_policies.allow_access_to_other_accounts, 0)}"
+    }
+    ```
+
+1. When you're calling `ssh-iam install`, pass the ARN of the IAM role from the other account using `--role-arn` 
+   argument.
+   
+    ```
+    ssh-iam install --iam-group ssh-users --role-arn arn:aws:iam::987654321000:role/allow-ssh-iam-access-from-other-accounts
+    ```
+
+Check out the [ssh-iam example](/examples/ssh-iam) for sample code and pay attention to the `external_account_arn`
+input variable.
+
 
 #### Test it out
 
@@ -159,7 +216,7 @@ You can run `ssh-iam --help` at any time to see the CLI docs.
 
 #### print-keys command
 
-Usage: `ssh-iam print-keys USERNAME`
+Usage: `ssh-iam print-keys [OPTIONS] USERNAME`
 
 Description: Find the public keys stored for the specified IAM user and print them to stdout.
 
@@ -167,9 +224,16 @@ Arguments:
 
 * `USERNAME` (required): Look up the public keys for this IAM user name.
 
+Options:
+
+* `--role-arn` (optional): Assume this IAM role for all API calls to AWS. This is used primarily when the IAM users and 
+  groups are defined in another AWS account.
+
 Examples:
 
-`ssh-iam print-keys grunt`
+```
+ssh-iam print-keys grunt
+```
 
 #### sync-users command
 
@@ -183,11 +247,15 @@ Options:
   one of `--iam-group` or `--iam-group-sudo` is required.
 * `--iam-group-sudo` (optional): Sync the user accounts on this system with the user accounts in this IAM group and
   give these user accounts sudo privileges. At least one of `--iam-group` or `--iam-group-sudo` is required.
+* `--role-arn` (optional): Assume this IAM role for all API calls to AWS. This is used primarily when the IAM users and 
+  groups are defined in another AWS account.
 * `--dry-run` (optional): Print out what this command would do, but don't actually make any changes on this system.
 
 Examples:
 
-`ssh-iam sync-users --iam-group ssh-group --iam-group-sudo ssh-sudo-group`
+```
+ssh-iam sync-users --iam-group ssh-group --iam-group-sudo ssh-sudo-group
+```
 
 #### install command
 
@@ -206,7 +274,15 @@ Options:
   Default: `*/30 * * * *` (every 30 minutes).
 * `--authorized-keys-command-user` (optional): The user that should execute the SSH AuthorizedKeysCommand. Default:
   current user.
+* `--role-arn` (optional): Assume this IAM role for all API calls to AWS. This is used primarily when the IAM users and 
+  groups are defined in another AWS account.
 * `--dry-run` (optional): Print out what this command would do, but don't actually make any changes on this system.
+
+Examples:
+
+```
+ssh-iam install --iam-group ssh-users --iam-group-sudo ssh-sudo-users 
+```
 
 ## Threat model
 
