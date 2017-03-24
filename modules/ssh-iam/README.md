@@ -77,7 +77,7 @@ See the [CLI docs](#cli-docs) for the full list of available options.
 1. IAM permissions: `ssh-iam` needs an [IAM
    Policy](http://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies.html) that allows the `iam:GetGroup`,
    `iam:ListSSHPublicKeys`, and `iam:GetSSHPublicKey` actions. The [iam-policies module](modules/iam-policies) can 
-   provides the IAM policy with these permissions for you in the output variable `ssh_iam_permissions`. 
+   provide the IAM policy with these permissions for you in the output variable `ssh_iam_permissions`. 
 
 Check out the [ssh-iam example](/examples/ssh-iam) for sample code.
 

@@ -79,7 +79,7 @@ This module creates the following IAM Policy documents:
 - **iam-user-self-mgmt:** provides permission to manage your own IAM User account. This includes resetting the IAM User 
   password, and generating AWS account credentials. It also grants permission to list other IAM Users, but not to view 
   any information about them.
-- **allow_access_to_other_accounts:** providers permission to assume an IAM role in another AWS account. This makes
+- **allow_access_to_other_accounts:** provides permission to assume an IAM role in another AWS account. This makes
   [cross-account access](https://aws.amazon.com/blogs/security/enable-a-new-feature-in-the-aws-management-console-cross-account-access/),
   easy, where you can have all your users defined in one AWS account (e.g. users) and to grant those users access to 
   certain IAM roles in other AWS accounts (e.g. stage, prod). The documents that are created and which IAM roles they
@@ -89,7 +89,7 @@ This module creates the following IAM Policy documents:
   easy, where you can have all your users defined in one AWS account (e.g. users) and to grant those users access to 
   certain IAM roles in other AWS accounts (e.g. stage, prod). The documents that are created and which IAM roles they
   have access to is controlled by the variable `var.allow_access_from_other_account_arns`.
-- **ssh_iam_permissions**: providers the permissions [ssh-iam](/modules/ssh-iam) needs to validate SSH keys. 
+- **ssh_iam_permissions**: provides the permissions [ssh-iam](/modules/ssh-iam) needs to validate SSH keys. 
 
 
 ## Additional Guidelines

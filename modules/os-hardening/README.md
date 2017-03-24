@@ -5,16 +5,16 @@ If you're not a customer, contact us at <info@gruntwork.io> or <http://www.grunt
 
 # OS Hardening
 
-This is a Gruntwork Script Module meant to be used with [Packer](http://packer.io) to build an AMI of a hardened Linux 
-OS. At present, the only supported Linux distribution is Amazon Linux. If you wish to add another distribution, please 
+This is a Gruntwork Script Module meant to be used with [Packer](http://packer.io) to build an AMI of a hardened Linux
+OS. At present, the only supported Linux distribution is Amazon Linux. If you wish to add another distribution, please
 contact support@gruntwork.io.
 
 Our OS hardening is based primarily on the guidelines described in in the [Center for Internet Security Benchmarks](
-https://benchmarks.cisecurity.org/downloads/benchmarks/), which are freely downloadable. For Amazon Linux, we used the 
-**CIS Amazon Linux Benchmark, v2.0.0 06-02-2016**. 
+https://benchmarks.cisecurity.org/downloads/benchmarks/), which are freely downloadable. For Amazon Linux, we used the
+**CIS Amazon Linux Benchmark, v2.0.0 06-02-2016**.
 
 Note that we have not yet implemented the entire CIS Benchmark. At present, the primary implemented OS hardening feature
-is mounting multiple partitions. We hope to implement more CIS recommendations over time. 
+is mounting multiple partitions. We hope to implement more CIS recommendations over time.
 
 ## Main Components of this Module
 
@@ -22,22 +22,22 @@ There are two major components to this module:
 
 - [ami-builder](ami-builder): This is a Terraform template that launches an EC2 Instance with Packer pre-installed.
 - [partition-scripts](partition-scripts): This is a set of bash scripts that create multiple disk partitions, format them
-  as ext4, and mount them to various paths with various mount options such as `noexec` or `nosuid`. These scripts are 
-  meant to be run in a Packer template that uses the Packer [amazon-chroot](https://www.packer.io/docs/builders/amazon-chroot.html) 
+  as ext4, and mount them to various paths with various mount options such as `noexec` or `nosuid`. These scripts are
+  meant to be run in a Packer template that uses the Packer [amazon-chroot](https://www.packer.io/docs/builders/amazon-chroot.html)
   builder.
-   
+
 Fundamentally, to generate an AMI you must:
 
 1. Create a Packer template `amazon-linux.json` that uses the partition-scripts.
 1. Launch the ami-builder EC2 Instance.
-1. Copy your Packer template ont the ami-builder EC2 Instance (e.g. with `scp`).
+1. Copy your Packer template onto the ami-builder EC2 Instance (e.g. with `scp`).
 1. SSH into the ami-builder EC2 Instance and run `packer build amazon-linux.json` to build the AMI.
 1. Terminate the ami-builder EC2 Instance.
 
 We recognize that is a lot of manual steps to build a single AMI, so check out the [os-hardening example](/examples/os-hardening)
 for a pre-built Packer template plus a script (`packer-build.sh`) that will automate all the above steps.
 
-### Why do I need to launch a separate EC2 Instance to run Packer? 
+### Why do I need to launch a separate EC2 Instance to run Packer?
 
 This is because we're using the Packer [amazon-chroot](https://www.packer.io/docs/builders/amazon-chroot.html) builder.
 See below for additional details on what this is and how to use it.
@@ -50,25 +50,25 @@ create the AMI with a single command and may be viewed as a "canonical" way to i
 
 ### How to Set Your EBS Volume Size and Configure The File System Partitions You Want
 
-Before building the AMI with Packer, you may wish to customize the particular file systems and partitions that your 
+Before building the AMI with Packer, you may wish to customize the particular file systems and partitions that your
 hardened OS will use. Follow these steps:
 
-1. Set the value of the `ebs_volume_size` variable in the example Packer Template (e.g. `amazon-linux.json`) to the 
+1. Set the value of the `ebs_volume_size` variable in the example Packer Template (e.g. `amazon-linux.json`) to the
    desired EBS Volume size (in GB).
 
 1. Edit the Packer Template so that the following scripts specify the desired partition paths
    and sizes:
-   - `partition-volumes.sh`: For each desired partition, add an argument like `--partition '/home:4G'`. For additional 
-      details see [partition-volume.sh](scripts/partition-volume.sh). Note that for the last `--partition` entry only, 
-      you may specify `*` for the size to tell the script to create the largest possible partition based on remaining 
+   - `partition-volume`: For each desired partition, add an argument like `--partition '/home:4G'`. For additional
+      details see [partition-volume](partition-scripts/bin/partition-volume). Note that for the last `--partition` entry only,
+      you may specify `*` for the size to tell the script to create the largest possible partition based on remaining
       disk space. Also, make sure your partition sizes don't exceed the space available on your EBS Volume!
-   - `cleanup.sh`: For each desired partition, add an argument like `--mount-point '/home'`. For additional details see
-      [cleanup.sh](scripts/cleanup.sh)
-   
-   Note that you will redundantly pass the same list of partition paths to each of the above scripts, but only 
-   `partition-volumes.sh` needs both the mount point *and* the desired partition size.
+   - `cleanup-volume`: For each desired partition, add an argument like `--mount-point '/home'`. For additional details see
+      [cleanup-volume](partition-scripts/bin/cleanup-volume)
 
-1. Edit the `/files/etc/fstab` file to match the partitions from the previous step. Specify any mount options as desired.
+   Note that you will redundantly pass the same list of partition paths to each of the above scripts, but only
+   `partition-volume` needs both the mount point *and* the desired partition size.
+
+1. Edit the `files/etc/fstab` file to match the partitions from the previous step. Specify any mount options as desired.
 
 That's it! The Packer template will take care of the rest.
 
@@ -82,35 +82,35 @@ that automates all these steps, but, for the sake of understanding, we'll descri
 2. On your local machine run `rsync` so that your local directory is continually synced to the ami-builder:
 
    ```
-   while true; do rsync -azv ./packer-templates/ ec2-user@54.212.196.166:/home/ec2-user/ami-builder; sleep 1; done
+   while true; do rsync -azv ./packer-templates/ ec2-user@54.212.196.166:~/ami-builder; sleep 1; done
    ```
-   
+
    Be sure to replace the IP address above with the IP address of your EC2 Instance.
-   
+
 3. From the ami-builder EC2 Instance, run Packer:
- 
+
     ```
     cd /home/ec2-user/ami-builder
     sudo su
     packer build amazon-linux.json
     ```
-    
-    Note that it is important to actually use `sudo su` versus just `sudo` since the $PATH variables are different for 
-    the `root` user versus the `ec2-user` user. 
-    
-    The AMI will now build. 
+
+    Note that it is important to actually use `sudo su` versus just `sudo` since the $PATH variables are different for
+    the `root` user versus the `ec2-user` user.
+
+    The AMI will now build.
 
 4. When finished, terminate the ami-builder EC2 Instance.
 
 ### How to Launch an AMI with an Encrypted EBS Volume
 
-As of Packer 0.12.3, Packer supports the `encrypt_boot` property for the amazon-chroot builder! See  [Pull Request #4584](https://github.com/mitchellh/packer/pull/4584). 
-This will allow us to build an AMI as above, except that once the AMI is ready, Packer will automatically copy the 
-unencrypted [Snapshot](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSSnapshots.html) as an encrypted Snapshot, 
+As of Packer 0.12.3, Packer supports the `encrypt_boot` property for the amazon-chroot builder! See  [Pull Request #4584](https://github.com/mitchellh/packer/pull/4584).
+This will allow us to build an AMI as above, except that once the AMI is ready, Packer will automatically copy the
+unencrypted [Snapshot](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSSnapshots.html) as an encrypted Snapshot,
 create a new AMI based on the encrypted Snapshot, and delete the original AMI and its underlying unecncrypted Snapshot.
 
-Until Packer 0.12.3 is released, you can still set `encrypt_boot` to true and earlier versions of Packer will simply 
-ignore this property. In the meantime, consider running an EC2 Instance with the root volume unencrypted, but with 
+Until Packer 0.12.3 is released, you can still set `encrypt_boot` to true and earlier versions of Packer will simply
+ignore this property. In the meantime, consider running an EC2 Instance with the root volume unencrypted, but with
 additional volumes mounted as encrypted volumes.
 
 ### Using Your Hardened OS as a "Base AMI"
@@ -140,7 +140,7 @@ to a folder that *is* executable. For example, here we set `remote_folder` to `/
     ]
 }]
 ```
-    
+
 ## How this Module Works
 
 Much of the design for this module is motivated by our need to support multiple [partitions](http://www.tldp.org/LDP/intro-linux/html/sect_03_01.html)
@@ -155,26 +155,26 @@ templates that use this builder work as follows:
 2. Packer executes a series of provisioners (e.g. upload files, run shell scripts).
 3. When finished, Packer shuts down the EC2 instance.
 4. Packer takes a snapshot.
-5. When the snapshot is complete, Packer creates an AMI and terminates the EC2 Instance. 
+5. When the snapshot is complete, Packer creates an AMI and terminates the EC2 Instance.
 
 The primary advantage of the amazon-ebs Packer builder is simplicity and isolation. Each Packer build launches a completely
- fresh EC2 Instance. The primary downsides are (1) Packer builds are slow because you have to launch a completely new 
- EC2 instance for each build, and (2) it is not possible to make any file system changes to the root partition because 
- you can't unmount the very partition on which the OS itself is running. 
- 
+ fresh EC2 Instance. The primary downsides are (1) Packer builds are slow because you have to launch a completely new
+ EC2 instance for each build, and (2) it is not possible to make any file system changes to the root partition because
+ you can't unmount the very partition on which the OS itself is running.
+
 ### The Packer amazon-chroot builder
 
 To address the shortcomings of the amazon-ebs builder, Packer also has the [amazon-chroot](https://www.packer.io/docs/builders/amazon-chroot.html)
 builder. Packer templates that use this builder work as follows:
- 
+
 1. Out-of-band from Packer, someone launches an EC2 Instance (the "host system").
-2. From the host system, run `packer build <packer-template-file>`. 
-3. Packer creates an EBS Volume based on the Snapshot that's part of the source AMI specified in the Packer template, 
+2. From the host system, run `packer build <packer-template-file>`.
+3. Packer creates an EBS Volume based on the Snapshot that's part of the source AMI specified in the Packer template,
    attaches it to the host system, and mounts it.
 4. Packer executes the `chroot` command against the path where the EBS Volume has been mounted, which starts a process
    that now sees `/path/to/ebs-volume` as the `/` directory.
 5. Packer executes any provisioners in the Packer template. Because most provisioners are running in the `chroot`
-   environment, they will execute directly on the EBS Volume. 
+   environment, they will execute directly on the EBS Volume.
 6. When all provisioners are complete, Packer detaches the volume, takes a snapshot, and creates an AMI from the snapshot.
 
 #### The Packer Remote Shell Provisioner
@@ -182,11 +182,11 @@ builder. Packer templates that use this builder work as follows:
 Most Packer builds use the [remote-shell](https://www.packer.io/docs/provisioners/shell.html) provisioner to apply
 configuration. It's called the remote shell provisioner because it executes shell commands on the "remote" EC2 Instance.
 When using the amazon-ebs builder, that means the newly launched EC2 Instance runs the shell commands. When using the
-amazon-chroot builder, that means the commands are run from within the `chroot` environment. 
+amazon-chroot builder, that means the commands are run from within the `chroot` environment.
 
-That is, Packer will first run `chroot /my/mount/point` and *then* execute all commands. An individual program has no 
-knowledge that it's running in a special environment. It will simply access the typical file system paths. But we, the 
-omniscient operator know that in reality what this program thinks is `/` is actually `/my/mount/point`.
+That is, Packer will first run `chroot /path/to/ebs-volume` and *then* execute all commands. An individual program has no
+knowledge that it's running in a special environment. It will simply access the typical file system paths. But we, the
+omniscient operator know that in reality what this program thinks is `/` is actually `/path/to/ebs-volume`.
 
 This way, we can configure our EC2 Instance as we typically do in a Packer build, except that all configuration commands
 are actually modifying the attached EBS Volume, not our root file system.
@@ -194,11 +194,11 @@ are actually modifying the attached EBS Volume, not our root file system.
 #### The Packer Local Shell Provisioner
 
 The Packer [local-shell](https://www.packer.io/docs/provisioners/shell-local.html) provisioner executes shell commands
-from your "local" machine. 
- 
+from your "local" machine.
+
 When using the amazon-ebs builder, that means shell commands run from your local machine.
 
-When using the amazon-chroot builder, that means the commands are run from the EC2 Instance where you launched Packer. 
+When using the amazon-chroot builder, that means the commands are run from the EC2 Instance where you launched Packer.
 This is significant because it means we can execute Packer commands from the host system against the attached EBS Volume.
 This allows us to, for example, delete partitions from the attached EBS Volume and add new partitions. It is the only way
 to use Packer to create an AMI with multiple partitions.
@@ -222,7 +222,7 @@ But it turns out that not all Linux disk partition management tools support the 
 `fdisk` has only "experimental" support for GPT. For that reason, we opted to use the newer `gdisk`.
 
 But `gdisk` works with an interactive prompt, whereas we want to execute full commands as part of our Packer build. For
-this reason, we use `sgdisk`, which implements all the same functionality of `gdisk` but as a pure command-line tool 
+this reason, we use `sgdisk`, which implements all the same functionality of `gdisk` but as a pure command-line tool
 and not an interactive tool.
 
 ### Managing Partitions with `gdisk` vs. LVM
@@ -234,27 +234,27 @@ root!) without taking your disk offline.
 
 This approach was originally inspired by the presentation [OS Hardening and Packer](https://www.youtube.com/watch?v=8h_Y-L1Q8xI&t=1165s),
  where the speaker makes extensive use of LVM with RHEL and the Packer amazon-chroot builder.
- 
+
 But LVM requires that the `/boot` directory be mounted to a separate file system, which in turn requires that `/` and
-`/boot` be on separate disk partitions. Since the default boot loader configuration for the Amazon Linux EBS Volume 
-expects both `/` and `/boot` on a single partition (partition #1, to be exact), separating these two directories meant 
+`/boot` be on separate disk partitions. Since the default boot loader configuration for the Amazon Linux EBS Volume
+expects both `/` and `/boot` on a single partition (partition #1, to be exact), separating these two directories meant
 that we needed to reload the boot loader.
 
-But this proved unworkable. Amazon Linux uses an older version of GRUB for its boot loader, and GRUB was unable to find
+However, this proved unworkable. Amazon Linux uses an older version of GRUB for its boot loader, and GRUB was unable to find
 the "BIOS partition" of the disk where it should write part of the boot loader configuration. After many attempts, we
  eventually gave up on this direction and instead settled for using traditional "on disk" volumes formatted with `gdisk`.
- 
+
 It's likely that these issues are specific to Amazon Linux. Also, the only practical consequence of this is that disk
-partitions on EBS Volumes cannot be dynamically resized without stopping the instance and separately mounting the EBS 
-Volume. But since we anticipate most users will use an immutable infrastructure anyway, we felt that asking users to
-who needed additional space to build a new AMI was not unreasonable.
+partitions on EBS Volumes cannot be dynamically resized without stopping the instance and separately mounting the EBS
+Volume. But since we anticipate most users will use an immutable infrastructure anyway, we felt that asking users who
+needed additional space to build a new AMI was not unreasonable.
 
 ## Gotchas
 
-- Per the []Packer docs for the amazon-chroot builder](https://www.packer.io/docs/builders/amazon-chroot.html), your 
-  provisioning scripts must not leave any processes running or Packer will be unable to unmount the filesystem. 
+- Per the [Packer docs for the amazon-chroot builder](https://www.packer.io/docs/builders/amazon-chroot.html), your
+  provisioning scripts must not leave any processes running or Packer will be unable to unmount the filesystem.
 
 ## TODO
 
-- Consider setting up new CloudWatch metrics to report available space on multiple disk partitions, not just the root 
+- Consider setting up new CloudWatch metrics to report available space on multiple disk partitions, not just the root
 disk partition.
