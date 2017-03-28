@@ -112,7 +112,7 @@ so you can enter multiple lines:
 
 ```
 pass insert -m aws-sts-env-vars
-Enter contents of bind/foo and press Ctrl+D when finished:
+Enter contents of aws-sts-env-vars and press Ctrl+D when finished:
 ```
 
 And now enter the following script:
