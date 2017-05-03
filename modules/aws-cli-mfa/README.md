@@ -5,9 +5,13 @@ If you're not a customer, contact us at <info@gruntwork.io> or <http://www.grunt
 
 # AWS CLI MFA Helper
 
-This module is a small wrapper script for the [AWS CLI](https://aws.amazon.com/cli/) that makes it easier to use when
-[multi-factor authentication (MFA)](https://aws.amazon.com/premiumsupport/knowledge-center/authenticate-mfa-cli/) is
-enabled. 
+This module is a small wrapper script for the [AWS CLI](https://aws.amazon.com/cli/) that makes it much easier to 
+authenticate to AWS when:
+
+1. [Multi-factor authentication (MFA)](https://aws.amazon.com/premiumsupport/knowledge-center/authenticate-mfa-cli/) is
+   enabled.
+1. [You want to assume an IAM Role](http://docs.aws.amazon.com/cli/latest/reference/sts/assume-role.html), such as an
+   IAM role that gives you access to another AWS account.
 
 
 
@@ -43,6 +47,33 @@ export AWS_SECRET_ACCESS_KEY='BBB'
 export AWS_SESSION_TOKEN='CCC'
 ```
 
+If you want to assume an IAM role, you have to make another API call:
+
+```bash
+aws sts assume-role --role-arn arn:aws:iam::123456789011:role/my-role --role-session-name my-name 
+```
+
+Which returns another blob of JSON:
+
+```json
+{
+  "Credentials": {
+    "AccessKeyId": "EEE",
+    "SecretAccessKey": "FFF",
+    "SessionToken": "GGG",
+    "Expiration": "HHH"
+  }
+}
+```
+
+Which you again have to copy into the proper environment variable:
+
+```bash
+export AWS_ACCESS_KEY_ID='EEE'
+export AWS_SECRET_ACCESS_KEY='FFF'
+export AWS_SESSION_TOKEN='GGG'
+```
+
 With this script, all of this can be done in a single command!
 
 
@@ -57,8 +88,19 @@ To install the script, you can either copy it manually to a location on your `PA
 gruntwork-install --module-name 'aws-cli-mfa' --repo 'https://github.com/gruntwork-io/module-security' --tag 'v0.4.6'
 ```
 
-Now you can run the script with the exact same arguments as the AWS `get-session-token` command, but instead of 
-outputting JSON, the script outputs a series of `export XXX=YYY` statements: 
+Now you can run the script with the exact same arguments as the AWS `get-session-token` command: 
+
+```bash
+aws-cli-mfa --serial-number arn:aws:iam::123456789011:mfa/jondoe --token-code 123456
+```
+
+If you want to assume an IAM role, just specify the ARN of that role with the `--role-arn` parameter: 
+
+```bash
+aws-cli-mfa --serial-number arn:aws:iam::123456789011:mfa/jondoe --token-code 123456 --role-arn arn:aws:iam::123456789011:role/my-role
+```
+
+Either way, the `aws-cli-mfa` script will write a series of `export XXX=YYY` statements to `stdout`:
 
 ```bash
 aws-cli-mfa --serial-number arn:aws:iam::123456789011:mfa/jondoe --token-code 123456
@@ -107,6 +149,13 @@ pass insert aws-mfa-arn
 Enter password for aws-mfa-arn: arn:aws:iam::123456789011:mfa/jondoe
 ```
 
+If you will be assuming an IAM Role ARN, put that in `pass` too:
+
+```
+pass insert aws-iam-role-arn
+Enter password for aws-iam-role-arn: arn:aws:iam::123456789011:role/my-role
+```
+
 Now, you can store a script in `pass` that ties all of this together. Run the `insert` command with the `-m` parameter
 so you can enter multiple lines:
 
@@ -122,12 +171,19 @@ read -p "Enter your MFA token: " token
 eval $(AWS_ACCESS_KEY_ID=$(pass aws-access-key-id) AWS_SECRET_ACCESS_KEY=$(pass aws-secret-access-key) aws-cli-mfa --serial-number $(pass aws-mfa-arn) --token-code "$token")
 ```
 
+If you want the script to assume an IAM role, just add the `--iam-role` parameter at the end:
+
+```bash
+read -p "Enter your MFA token: " token
+eval $(AWS_ACCESS_KEY_ID=$(pass aws-access-key-id) AWS_SECRET_ACCESS_KEY=$(pass aws-secret-access-key) aws-cli-mfa --serial-number $(pass aws-mfa-arn) --token-code "$token" --iam-role $(pass aws-iam-role-arn))
+```
+
 Now, to setup your temporary STS credentials is *truly* a one-liner!
  
 ```bash
 eval "$(pass aws-sts-env-vars)"
 ``` 
 
-
+*Note: the double quotes around the `$()` are required.*
 
 
