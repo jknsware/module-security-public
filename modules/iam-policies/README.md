@@ -84,6 +84,8 @@ This module creates the following IAM Policy documents:
   easy, where you can have all your users defined in one AWS account (e.g. users) and to grant those users access to 
   certain IAM roles in other AWS accounts (e.g. stage, prod). The documents that are created and which IAM roles they
   have access to is controlled by the variable `var.allow_access_to_other_account_arns`.
+- **allow_access_to_all_other_accounts:** provides permission to assume an IAM role in all the external AWS accounts 
+  specified in `var.allow_access_to_other_account_arns`.
 - **allow_access_from_other_accounts:** allows users from other AWS accounts to assume specific roles in this account. 
   This makes [cross-account access](https://aws.amazon.com/blogs/security/enable-a-new-feature-in-the-aws-management-console-cross-account-access/),
   easy, where you can have all your users defined in one AWS account (e.g. users) and to grant those users access to 

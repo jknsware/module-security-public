@@ -102,7 +102,7 @@ are named `allow_XXX_access_sign_in_url`, where `XXX` is one of `read-only`, `bi
 ### Switching with CLI tools (including Terraform)
 
 Check out the [AWS Switching to a Role (AWS Command Line Interface)
-documentation](http://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-cli.html).
+documentation](http://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-cli.html). Note that assuming roles with the AWS CLI takes quite a few steps, so use the [aws-cli-mfa script](https://github.com/gruntwork-io/module-security-public/tree/master/modules/aws-cli-mfa) to reduce it to a one-liner.
 
 
 
