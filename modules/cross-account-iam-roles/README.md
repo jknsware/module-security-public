@@ -84,6 +84,10 @@ This module creates the following IAM roles (all optional):
 * **allow-full-access-from-other-accounts**: Users from the accounts in `var.allow_full_access_from_other_account_arns` 
   will get full (read and write) access to all services in this account.
   
+* **allow-auto-deploy-access-from-other-accounts**: Users from the accounts in `var.allow_auto_deploy_from_other_account_arns` 
+  will get automated deployment access to all services in this account with the permissions specified in 
+  `var.auto_deploy_permissions`. The main use case is to allow a CI server (e.g. Jenkins) in another AWS account to do 
+  automated deployments in this AWS account.
 
 
 

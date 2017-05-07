@@ -69,30 +69,45 @@ Check out the [iam-groups](../iam-groups) and [corss-account-iam-roles](../cross
 This module creates the following IAM Policy documents:
 
 - **full-access:** provides full access to all resources in the AWS account.
+
 - **billing:** provides read and write billing settings, but nothing else.
+
 - **developers:** provides whatever permissions are declared in `var.dev_permitted_services`. 
   In addition, creates permissions for a personal S3 bucket named `<var.dev_permitted_services><iam-user-name>`. 
+
 - **read-only:** provides read access to all resources in the AWS account but have no write privileges.
+
 - **use-existing-iam-roles:** allows passing *existing* IAM Roles to AWS resources to which you have been granted 
   access. Does not allow creating *new* IAM Roles. See [below](#the-three-levels-of-iam-permissions) for more 
   information.
+
 - **iam-user-self-mgmt:** provides permission to manage your own IAM User account. This includes resetting the IAM User 
   password, and generating AWS account credentials. It also grants permission to list other IAM Users, but not to view 
   any information about them.
+
 - **allow_access_to_other_accounts:** provides permission to assume an IAM role in another AWS account. This makes
   [cross-account access](https://aws.amazon.com/blogs/security/enable-a-new-feature-in-the-aws-management-console-cross-account-access/),
   easy, where you can have all your users defined in one AWS account (e.g. users) and to grant those users access to 
   certain IAM roles in other AWS accounts (e.g. stage, prod). The documents that are created and which IAM roles they
   have access to is controlled by the variable `var.allow_access_to_other_account_arns`.
+
 - **allow_access_to_all_other_accounts:** provides permission to assume an IAM role in all the external AWS accounts 
   specified in `var.allow_access_to_other_account_arns`.
+
 - **allow_access_from_other_accounts:** allows users from other AWS accounts to assume specific roles in this account. 
   This makes [cross-account access](https://aws.amazon.com/blogs/security/enable-a-new-feature-in-the-aws-management-console-cross-account-access/),
   easy, where you can have all your users defined in one AWS account (e.g. users) and to grant those users access to 
   certain IAM roles in other AWS accounts (e.g. stage, prod). The documents that are created and which IAM roles they
   have access to is controlled by the variable `var.allow_access_from_other_account_arns`.
+
 - **ssh_iam_permissions**: provides the permissions [ssh-iam](/modules/ssh-iam) needs to validate SSH keys. 
 
+- **auto_deploy_permissions**: provides the permissions in `var.auto_deploy_permissions` to do automated deployment.
+  The primary use case is to add these permissions to the IAM role of a CI server (e.g. Jenkins).
+
+- **allow_auto_deploy_from_other_accounts**: allows the IAM ARNs in `var.allow_auto_deploy_from_other_account_arns` to
+  do automated deployment using the permissions in `var.auto_deploy_permissions`. The primary use cases is to allow a
+  CI server (e.g. Jenkins) in another AWS account to do automated deployments in this AWS account.
 
 ## Additional Guidelines
 
