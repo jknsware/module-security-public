@@ -1,15 +1,15 @@
 **Note**: This public repo contains the documentation for the private GitHub repo <https://github.com/gruntwork-io/module-security>.
 We publish the documentation publicly so it turns up in online searches, but to see the source code, you must be a Gruntwork customer.
-If you're already a Gruntwork customer, the original source for this file is at: <https://github.com/gruntwork-io/module-security/blob/master/modules/aws-cli-mfa/README.md>.
+If you're already a Gruntwork customer, the original source for this file is at: <https://github.com/gruntwork-io/module-security/blob/master/modules/aws-auth/README.md>.
 If you're not a customer, contact us at <info@gruntwork.io> or <http://www.gruntwork.io> for info on how to get access!
 
-# AWS CLI MFA Helper
+# AWS Auth Helper
 
 This module is a small wrapper script for the [AWS CLI](https://aws.amazon.com/cli/) that makes it much easier to 
 authenticate to AWS when:
 
 1. [Multi-factor authentication (MFA)](https://aws.amazon.com/premiumsupport/knowledge-center/authenticate-mfa-cli/) is
-   enabled.
+   enabled, and/or 
 1. [You want to assume an IAM Role](http://docs.aws.amazon.com/cli/latest/reference/sts/assume-role.html), such as an
    IAM role that gives you access to another AWS account.
 
@@ -85,25 +85,25 @@ To install the script, you can either copy it manually to a location on your `PA
 [gruntwork-install](https://github.com/gruntwork-io/gruntwork-installer) command:
 
 ```bash
-gruntwork-install --module-name 'aws-cli-mfa' --repo 'https://github.com/gruntwork-io/module-security' --tag 'v0.4.6'
+gruntwork-install --module-name 'aws-auth' --repo 'https://github.com/gruntwork-io/module-security' --tag 'v0.4.6'
 ```
 
 Now you can run the script with the exact same arguments as the AWS `get-session-token` command: 
 
 ```bash
-aws-cli-mfa --serial-number arn:aws:iam::123456789011:mfa/jondoe --token-code 123456
+aws-auth--serial-number arn:aws:iam::123456789011:mfa/jondoe --token-code 123456
 ```
 
 If you want to assume an IAM role, just specify the ARN of that role with the `--role-arn` parameter: 
 
 ```bash
-aws-cli-mfa --serial-number arn:aws:iam::123456789011:mfa/jondoe --token-code 123456 --role-arn arn:aws:iam::123456789011:role/my-role
+aws-auth --serial-number arn:aws:iam::123456789011:mfa/jondoe --token-code 123456 --role-arn arn:aws:iam::123456789011:role/my-role
 ```
 
-Either way, the `aws-cli-mfa` script will write a series of `export XXX=YYY` statements to `stdout`:
+Either way, the `aws-auth` script will write a series of `export XXX=YYY` statements to `stdout`:
 
 ```bash
-aws-cli-mfa --serial-number arn:aws:iam::123456789011:mfa/jondoe --token-code 123456
+aws-auth --serial-number arn:aws:iam::123456789011:mfa/jondoe --token-code 123456
 
 export AWS_ACCESS_KEY_ID='AAA'
 export AWS_SECRET_ACCESS_KEY='BBB'
@@ -113,7 +113,7 @@ export AWS_SESSION_TOKEN='CCC'
 To setup your AWS environment variables in one command, all you have to do is eval the result!
 
 ```bash
-eval "$(aws-cli-mfa --serial-number arn:aws:iam::123456789011:mfa/jondoe --token-code 123456)"
+eval "$(aws-auth --serial-number arn:aws:iam::123456789011:mfa/jondoe --token-code 123456)"
 ```
 
 
@@ -121,12 +121,12 @@ eval "$(aws-cli-mfa --serial-number arn:aws:iam::123456789011:mfa/jondoe --token
 
 ## Combining it with password managers
 
-To be fair, using `aws-cli-mfa` isn't *really* a one-liner, since you have to set your permanent AWS credentials first:
+To be fair, using `aws-auth` isn't *really* a one-liner, since you have to set your permanent AWS credentials first:
 
 ```bash
 export AWS_ACCESS_KEY_ID='<PERMANENT_ACCESS_KEY>'
 export AWS_SECRET_ACCESS_KEY='<PERMANENT_SECRET_KEY>'
-eval $(aws-cli-mfa --serial-number arn:aws:iam::123456789011:mfa/jondoe --token-code 123456)
+eval $(aws-auth --serial-number arn:aws:iam::123456789011:mfa/jondoe --token-code 123456)
 ```
 
 If you store your secrets in a CLI-friendly password manager, such as [pass](https://www.passwordstore.org/), then you
@@ -168,14 +168,14 @@ And now enter the following script:
 
 ```bash
 read -p "Enter your MFA token: " token
-eval $(AWS_ACCESS_KEY_ID=$(pass aws-access-key-id) AWS_SECRET_ACCESS_KEY=$(pass aws-secret-access-key) aws-cli-mfa --serial-number $(pass aws-mfa-arn) --token-code "$token")
+eval $(AWS_ACCESS_KEY_ID=$(pass aws-access-key-id) AWS_SECRET_ACCESS_KEY=$(pass aws-secret-access-key) aws-auth --serial-number $(pass aws-mfa-arn) --token-code "$token")
 ```
 
 If you want the script to assume an IAM role, just add the `--iam-role` parameter at the end:
 
 ```bash
 read -p "Enter your MFA token: " token
-eval $(AWS_ACCESS_KEY_ID=$(pass aws-access-key-id) AWS_SECRET_ACCESS_KEY=$(pass aws-secret-access-key) aws-cli-mfa --serial-number $(pass aws-mfa-arn) --token-code "$token" --iam-role $(pass aws-iam-role-arn))
+eval $(AWS_ACCESS_KEY_ID=$(pass aws-access-key-id) AWS_SECRET_ACCESS_KEY=$(pass aws-secret-access-key) aws-auth --serial-number $(pass aws-mfa-arn) --token-code "$token" --role-arn $(pass aws-iam-role-arn))
 ```
 
 Now, to setup your temporary STS credentials is *truly* a one-liner!

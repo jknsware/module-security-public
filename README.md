@@ -9,6 +9,8 @@ This repo contains modules for setting up best practices for managing secrets, c
 
 * [auto-update](/modules/auto-update): This module can configure a Linux server to automatically install security
   updates.
+* [aws-auth](/modules/aws-auth): This script module makes it easy to use the CLI to authenticate to AWS when you have an
+  MFA code, or want to assume an IAM Role in another AWS account.
 * [cloudtrail](/modules/cloudtrail): This Terraform Module configures AWS CloudTrail in an AWS account, along with reasonable
   defaults around the S3 Bucket in which CloudTrail logs are stored.
 * [kms-master-key](/modules/kms-master-key): This Terraform Module creates a new [Customer Master Key
