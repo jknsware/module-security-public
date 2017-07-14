@@ -83,7 +83,7 @@ Data](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/user-data.html#user-dat
 
 ```bash
 #!/bin/bash
-/etc/user-data/cloudwatch-fail2ban-cloudwatch/cloudwatch-fail2ban-cloudwatch.sh --cloudwatch-namespace Acme/Fail2Ban
+/etc/user-data/configure-fail2ban-cloudwatch/configure-fail2ban-cloudwatch.sh --cloudwatch-namespace Acme/Fail2Ban
 ```
 
 #### TODO

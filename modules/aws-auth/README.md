@@ -91,7 +91,7 @@ gruntwork-install --module-name 'aws-auth' --repo 'https://github.com/gruntwork-
 Now you can run the script with the exact same arguments as the AWS `get-session-token` command: 
 
 ```bash
-aws-auth--serial-number arn:aws:iam::123456789011:mfa/jondoe --token-code 123456
+aws-auth --serial-number arn:aws:iam::123456789011:mfa/jondoe --token-code 123456
 ```
 
 If you want to assume an IAM role, just specify the ARN of that role with the `--role-arn` parameter: 
