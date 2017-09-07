@@ -46,7 +46,12 @@ In account A, do the following:
     module "iam_groups" {
       source = "git::git@github.com:gruntwork-io/module-security.git//modules/iam-groups?ref=v1.0.8"
    
-      iam_groups_for_cross_account_access = "${map("account-b-read-only-access", "arn:aws:iam::1234567901234:role/allow-read-only-access-from-other-accounts")}"
+      iam_groups_for_cross_account_access = [
+        {
+          group_name = "account-b-read-only-access"
+          iam_role_arn = "arn:aws:iam::1234567901234:role/allow-read-only-access-from-other-accounts"
+        }
+      ]   
    
       # ... (other params omitted) ...
     }

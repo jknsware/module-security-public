@@ -81,6 +81,8 @@ With this script, all of this can be done in a single command!
 
 ## Quick start
 
+### Install aws-auth
+
 To install the script, you can either copy it manually to a location on your `PATH` or use the 
 [gruntwork-install](https://github.com/gruntwork-io/gruntwork-installer) command:
 
@@ -88,19 +90,38 @@ To install the script, you can either copy it manually to a location on your `PA
 gruntwork-install --module-name 'aws-auth' --repo 'https://github.com/gruntwork-io/module-security' --tag 'v0.4.6'
 ```
 
-Now you can run the script with the exact same arguments as the AWS `get-session-token` command: 
+### Usage
+
+_WARNING! Before running the following commands, authenticate to the AWS account that contains your IAM User using your
+static API Access Key ID and Secret Key._
+
+_We strongly recommend using a password manager like [1Password](https://1password.com/) or [pass](
+https://www.passwordstore.org/) to store any static credentials so they don't sit unencrypted on your local disk. 
+Internally, the Grunts at Gruntwork use pass with a unique GPG Key for each set of secrets._
+
+#### Authenticate to an AWS Account using MFA
 
 ```bash
 aws-auth --serial-number arn:aws:iam::123456789011:mfa/jondoe --token-code 123456
 ```
 
-If you want to assume an IAM role, just specify the ARN of that role with the `--role-arn` parameter: 
+Find the Serial Number ARN by viewing your IAM User profile in the AWS web console.
+
+#### Authenticate to an AWS Account using MFA and Assume an IAM Role in another Account
 
 ```bash
 aws-auth --serial-number arn:aws:iam::123456789011:mfa/jondoe --token-code 123456 --role-arn arn:aws:iam::123456789011:role/my-role
 ```
 
-Either way, the `aws-auth` script will write a series of `export XXX=YYY` statements to `stdout`:
+#### Required IAM Policy
+
+You must have the `iam:AssumeRole` permission on the "primary" AWS account in order to assume an IAM Role in a "secondary"
+AWS account. Furthermore, you must have the `iam:AssumeRole` permission on the specific IAM Role you wish to assume or
+on all resources (`*`).  
+
+#### Wrap the output in `eval()`
+
+When finished running, the `aws-auth` script will write a series of `export XXX=YYY` statements to `stdout`:
 
 ```bash
 aws-auth --serial-number arn:aws:iam::123456789011:mfa/jondoe --token-code 123456
@@ -116,8 +137,16 @@ To setup your AWS environment variables in one command, all you have to do is ev
 eval "$(aws-auth --serial-number arn:aws:iam::123456789011:mfa/jondoe --token-code 123456)"
 ```
 
+#### Switching Between multiple accounts
 
+A typical account switching workflow might be:
 
+1. Authenticate to "primary" AWS account using static credentials
+1. Use `aws-auth` to authenticate to "dev" account.
+1. Authenticate to "primary" AWS account using static credentials
+1. Use `aws-auth` to authenticate to "prod" account.
+
+Notice that you must re-authenticate to the "primary" AWS account before you can use `aws-auth` again.
 
 ## Combining it with password managers
 
@@ -169,6 +198,15 @@ And now enter the following script:
 ```bash
 read -p "Enter your MFA token: " token
 eval $(AWS_ACCESS_KEY_ID=$(pass aws-access-key-id) AWS_SECRET_ACCESS_KEY=$(pass aws-secret-access-key) aws-auth --serial-number $(pass aws-mfa-arn) --token-code "$token")
+```
+
+_Using [Fish Shell](https://fishshell.com/)? Use the following modified script instead:_
+
+```fish
+# For Fish Shell users only
+echo "Enter your token:";
+read -p "" token;
+eval (export AWS_ACCESS_KEY_ID=(pass aws-access-key-id); export AWS_SECRET_ACCESS_KEY=(pass lotus/aws-secret-access-key); aws-auth --serial-number (pass aws-mfa-arn) --token-code "$token")
 ```
 
 If you want the script to assume an IAM role, just add the `--iam-role` parameter at the end:
