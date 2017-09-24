@@ -5,7 +5,7 @@ If you're not a customer, contact us at <info@gruntwork.io> or <http://www.grunt
 
 # NTP Module Example
 
-This is an example of how to use the [ntp module](/modules/auto-update) to install and configure NTP on a Linux server.
+This is an example of how to use the [ntp module](/modules/ntp) to install and configure NTP on a Linux server.
 
 
 
