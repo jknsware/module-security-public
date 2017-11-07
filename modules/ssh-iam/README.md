@@ -66,6 +66,16 @@ The `install` command does two things:
 
 See the [CLI docs](#cli-docs) for the full list of available options.
 
+**Important note**: We recommend installing `ssh-iam` as part of a [Packer template](https://www.packer.io/) and 
+building an AMI with it. If you are installing `ssh-iam` interactively (e.g., for learning / experimentation) or
+as part of a User Data script, then you must restart `sshd` in order for the changes above to take effect! E.g., 
+depending on your OS, you'd have to run something like:
+
+```bash
+sudo service sshd reload
+```
+
+
 #### Set up IAM permissions
 
 ##### Single AWS account
