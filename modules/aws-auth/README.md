@@ -87,7 +87,7 @@ To install the script, you can either copy it manually to a location on your `PA
 [gruntwork-install](https://github.com/gruntwork-io/gruntwork-installer) command:
 
 ```bash
-gruntwork-install --module-name 'aws-auth' --repo 'https://github.com/gruntwork-io/module-security' --tag 'v0.6.2'
+gruntwork-install --module-name 'aws-auth' --repo 'https://github.com/gruntwork-io/module-security' --tag 'v0.6.5'
 ```
 
 ### Usage
